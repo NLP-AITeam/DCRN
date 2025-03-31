@@ -6,7 +6,7 @@ Implementation of our Paper “Learning Dual-Chain Based Representation for Mult
 
 ## Model Architecture
 
-![overview](Figures/OVERVIEW_1.pdf)
+![overview](Figures/OVERVIEW_1.png)
 
 
 
