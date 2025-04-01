@@ -1,6 +1,6 @@
 # Source Code of DCRN for Multimodal Relation Extraction
 
-Implementation of our Paper “Learning Dual-Chain Based Representation for Multimodal Relation Extraction” (Authors: Yongkang Yang, Lihong Zhong, Defeng Kong, Shipeng Liu,  Junjian Li and Wei She).
+Implementation of our Paper “Learning Dual-Chain Based Representation for Multimodal Relation Extraction”.
 
 
 
