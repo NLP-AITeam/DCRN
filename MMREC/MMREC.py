@@ -167,7 +167,6 @@ class MMREC(nn.Module):
         tail_hidden = (onehot_tail.unsqueeze(2) * hidden_text).sum(1)
         entity_pair_repr = torch.cat([head_hidden, tail_hidden], dim=-1)
 
-        # 3. 处理图像描述(类似MMREC处理图像)
         output_phrases = self.bert(token_phrase, attention_mask=att_mask_phrase)
         hidden_phrases = output_phrases[0]
         image_repr = torch.mean(hidden_phrases, dim=1)
@@ -179,24 +178,21 @@ class MMREC(nn.Module):
         new_image_repr = torch.cat([llm_summary_repr1, hidden_text1, image_repr], dim=1)
         image_repr = self.phrase_encoder(new_image_repr)
 
-        # 4. 处理LLM总结(MMREC核心思想)
         output_qwen = self.bert(token_qwen, attention_mask=att_mask_qwen)
         hidden_qwen = output_qwen[0]
         llm_summary_repr = torch.mean(hidden_qwen, dim=1)
 
         enhanced_entity_repr = self.llm_summary_processor(entity_pair_repr, llm_summary_repr)
 
-        # 6. 文本模态组合(MMREC风格)
         text_repr = torch.cat([
-            enhanced_entity_repr,  # 增强的实体表示
-            image_repr,  # 图像描述表示
-            llm_summary_repr  # LLM总结表示
+            enhanced_entity_repr,  
+            image_repr, 
+            llm_summary_repr  
         ], dim=1)
 
 
         reck_hidden_entity, W_final = self.reck_encoder(token, att_mask, pos1, pos2, pic, A, W, A_rev, W_rev)
 
-        # 8. 知识模态组合
         knowledge_repr = torch.cat([
             entity_pair_repr,
             image_repr,
