@@ -8,24 +8,24 @@ from torch import nn
 class LLMSummaryProcessor(nn.Module):
     def __init__(self, input_dim, hidden_size):
         super(LLMSummaryProcessor, self).__init__()
-        # 添加输入投影层，将实体表示降维
+        # Add input projection layer to reduce entity representation dimensions
         self.input_projection = nn.Linear(input_dim, hidden_size)
         self.attention = nn.MultiheadAttention(hidden_size, num_heads=8, batch_first=True)
         self.norm = nn.LayerNorm(hidden_size)
         self.output_projection = nn.Linear(hidden_size, hidden_size)
 
     def forward(self, entity_repr, llm_summary_repr):
-        # 对输入进行降维处理
+        # Dimension reduction processing for the input
         projected_entity = self.input_projection(entity_repr)
 
-        # 使用注意力机制
+        # Use attention mechanism
         attn_output, _ = self.attention(
             query=projected_entity.unsqueeze(1),
             key=llm_summary_repr.unsqueeze(1),
             value=llm_summary_repr.unsqueeze(1)
         )
 
-        # 归一化并投影
+        # Normalize and project
         enhanced_repr = self.norm(attn_output.squeeze(1) + projected_entity)
         return self.output_projection(enhanced_repr)
 
@@ -34,13 +34,13 @@ class UnifiedRepresentationSpace(nn.Module):
     def __init__(self, text_dim, knowledge_dim, output_dim):
         super(UnifiedRepresentationSpace, self).__init__()
 
-        # 统一投影层
+        # Unified projection layer
         self.text_projector = nn.Linear(text_dim, output_dim)
         self.knowledge_projector = nn.Linear(knowledge_dim, output_dim)
         self.norm = nn.LayerNorm(output_dim)
 
     def forward(self, knowledge_features):
-        # 投影到统一空间
+        # Project to unified space
 
         unified = self.knowledge_projector(knowledge_features)
 
@@ -52,7 +52,7 @@ class DLRMStylePredictor(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim):
         super(DLRMStylePredictor, self).__init__()
 
-        # 上游MLP
+        # Upstream MLP  
         self.upstream_mlp = nn.Sequential(
             nn.Linear(input_dim, hidden_dim * 2),
             nn.ReLU(),
@@ -60,7 +60,7 @@ class DLRMStylePredictor(nn.Module):
             nn.Linear(hidden_dim * 2, hidden_dim)
         )
 
-        # 下游MLP
+        # Downstream MLP
         self.downstream_mlp = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim // 2),
             nn.ReLU(),
@@ -69,10 +69,10 @@ class DLRMStylePredictor(nn.Module):
         )
 
     def forward(self, x):
-        # 上游MLP降维
+        # Upstream MLP dimensionality reduction
         hidden = self.upstream_mlp(x)
 
-        # 下游MLP预测
+        # Downstream MLP prediction
         output = self.downstream_mlp(hidden)
         return output
 
@@ -89,8 +89,8 @@ class WeightedFocalLoss(nn.Module):
         pt = torch.exp(-CE_loss)
         loss = self.alpha * (1 - pt) ** self.gamma * CE_loss
 
-        # 额外增加对假阳性的惩罚
-        # 假阳性：预测为正(非0类)但实际为负(0类)
+        # Additional penalty for false positives
+        # False positives: predicted as positive (non-zero class) but actually negative (class 0)
         pred_classes = torch.argmax(inputs, dim=1)
         false_positive_mask = (pred_classes != 0) & (targets == 0)
         loss[false_positive_mask] = loss[false_positive_mask] * 2.0
@@ -108,42 +108,42 @@ class MMREC(nn.Module):
         self.hidden_size = 768
         self.args = args
 
-        # 1. 文本编码器
+        # 1. Text Encoder
         logging.info('Loading BERT pre-trained checkpoint.')
         self.bert = transformers.BertModel.from_pretrained('/root/autodl-tmp/TMR/Model/bert-base-uncased')
         self.tokenizer = BertTokenizer.from_pretrained("/root/autodl-tmp/TMR/Model/bert-base-uncased")
         self.tokenizer.add_special_tokens(
             {'additional_special_tokens': ['[unused0]', '[unused1]', '[unused2]', '[unused3]']})
 
-        # 2. LLM摘要处理
+        # 2. LLM Summary Processing
         # self.llm_summary_processor = LLMSummaryProcessor(self.hidden_size)
         self.llm_summary_processor = LLMSummaryProcessor(
-            input_dim=self.hidden_size * 2,  # 实体对拼接后的维度
-            hidden_size=self.hidden_size  # 目标隐藏层维度
+            input_dim=self.hidden_size * 2,  
+            hidden_size=self.hidden_size  
         )
 
-        # 3. 知识图谱编码器(保留原有)
+        # 3. Knowledge Encoder
         from ..CK_encoder import RECK
         self.reck_encoder = RECK(128, "/root/autodl-tmp/TMR/Model/bert-base-uncased")
 
-        # 4. 统一表示空间
+        # 4. Unified Representation Space
         self.unified_space = UnifiedRepresentationSpace(
-            text_dim=self.hidden_size * 3,  # 实体对+LLM摘要
-            knowledge_dim=self.hidden_size * 5,  # 知识图谱特征
+            text_dim=self.hidden_size * 3, 
+            knowledge_dim=self.hidden_size * 5,  
             output_dim=self.hidden_size
         )
 
-        # 5. DLRM风格预测器
+        # 5. DLRM-style Predictor
         self.relation_predictor = DLRMStylePredictor(
             input_dim=self.hidden_size,
             hidden_dim=self.hidden_size // 2,
             output_dim=23
         )
 
-        # 6. 图像描述编码器
+        # 6. Image Description Encoder
         self.phrase_encoder = nn.Linear(self.hidden_size*3, self.hidden_size)
 
-        # 初始化
+        # Initialization
         self.apply(self._init_weights)
 
     def _init_weights(self, module):
@@ -158,7 +158,6 @@ class MMREC(nn.Module):
         output_text = self.bert(token, attention_mask=att_mask)
         hidden_text = output_text[0]
 
-        # 2. 提取实体表示
         onehot_head = torch.zeros(hidden_text.size()[:2]).float().to(hidden_text.device)
         onehot_tail = torch.zeros(hidden_text.size()[:2]).float().to(hidden_text.device)
         onehot_head = onehot_head.scatter_(1, pos1, 1)
