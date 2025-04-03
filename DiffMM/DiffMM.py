@@ -85,7 +85,7 @@ class DiffMM(nn.Module):
         self.temperature = args.temperature
 
     def diffusion_forward_process(self, x_0, t):
-        """前向扩散过程：逐步添加噪声"""
+        """Forward Diffusion Process: Gradually Adding Noise"""
         t = t.to(x_0.device)
 
         noise = torch.randn_like(x_0)
@@ -100,7 +100,7 @@ class DiffMM(nn.Module):
         return x_t, noise
 
     def diffusion_reverse_process(self, x_t, t, modality_cond=None):
-        """反向扩散过程：去噪"""
+        """Reverse Diffusion Process: Denoising"""
 
         t = t.to(x_t.device)
         t_emb = t.float() / self.diffusion_steps  # [batch_size]
@@ -112,7 +112,7 @@ class DiffMM(nn.Module):
         else:
             input_denoise = torch.cat([x_t, t_emb], dim=1)
 
-        # 预测噪声
+        # Noise Prediction
         pred_noise = self.denoise_net(input_denoise)
 
 
@@ -149,7 +149,7 @@ class DiffMM(nn.Module):
         return x_t_minus_1, x_0_pred, pred_noise
 
     def modality_signal_injection(self, text_feats, image_feats):
-        """模态感知信号注入"""
+        """Modal Perception Signal Injection"""
         text_proj = self.msi_text(text_feats)
         image_proj = self.msi_image(image_feats)
 
@@ -160,7 +160,7 @@ class DiffMM(nn.Module):
         return modality_signal
 
     def cross_modal_contrastive_loss(self, text_feats, image_feats, batch_size):
-        """跨模态对比学习损失"""
+        """Cross-Modal Contrastive Learning Loss"""
         text_proj = self.proj_text(text_feats)
         image_proj = self.proj_image(image_feats)
 
@@ -181,12 +181,12 @@ class DiffMM(nn.Module):
         return cl_loss
 
     def multi_modal_graph_aggregation(self, text_feats, image_feats):
-        """多模态图聚合"""
-        # 使用可学习的模态权重
+        """Multi-Modal Graph Aggregation"""
+        # Using Learnable Modal Weights
         text_weight = F.softplus(self.modal_weight_text)
         image_weight = F.softplus(self.modal_weight_image)
 
-        # 归一化权重
+        # Normalized Weights
         sum_weights = text_weight + image_weight
         text_weight = text_weight / sum_weights
         image_weight = image_weight / sum_weights
@@ -197,7 +197,7 @@ class DiffMM(nn.Module):
 
         image_feats_projected = self.proj_image_to_text_dim(image_feats)
 
-        # 加权聚合
+        # Weighted Aggregation
         aggregated_feats = text_weight * text_feats + image_weight * image_feats_projected
 
         return aggregated_feats
