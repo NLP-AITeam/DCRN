@@ -46,7 +46,6 @@ class DiffMM(nn.Module):
         self.linear_extend_pic = nn.Linear(self.hidden_size // 2, self.hidden_size // 2)
         self.dropout_linear = nn.Dropout(0.46)
 
-        # 新增
         self.args = args
 
         self.linear_final1 = nn.Linear(self.hidden_size, 768)
@@ -87,7 +86,6 @@ class DiffMM(nn.Module):
 
     def diffusion_forward_process(self, x_0, t):
         """前向扩散过程：逐步添加噪声"""
-        # 确保 t 在正确的设备上
         t = t.to(x_0.device)
 
         noise = torch.randn_like(x_0)
