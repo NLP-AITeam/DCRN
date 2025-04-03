@@ -110,8 +110,8 @@ class MMREC(nn.Module):
 
         # 1. Text Encoder
         logging.info('Loading BERT pre-trained checkpoint.')
-        self.bert = transformers.BertModel.from_pretrained('/root/autodl-tmp/TMR/Model/bert-base-uncased')
-        self.tokenizer = BertTokenizer.from_pretrained("/root/autodl-tmp/TMR/Model/bert-base-uncased")
+        self.bert = transformers.BertModel.from_pretrained('/root/autodl-tmp/Model/bert-base-uncased')
+        self.tokenizer = BertTokenizer.from_pretrained("/root/autodl-tmp/Model/bert-base-uncased")
         self.tokenizer.add_special_tokens(
             {'additional_special_tokens': ['[unused0]', '[unused1]', '[unused2]', '[unused3]']})
 
@@ -123,8 +123,7 @@ class MMREC(nn.Module):
         )
 
         # 3. Knowledge Encoder
-        from ..CK_encoder import RECK
-        self.reck_encoder = RECK(128, "/root/autodl-tmp/TMR/Model/bert-base-uncased")
+        self.reck_encoder = Knowledge(128, "/root/autodl-tmp/Model/bert-base-uncased")
 
         # 4. Unified Representation Space
         self.unified_space = UnifiedRepresentationSpace(
