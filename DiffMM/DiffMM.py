@@ -52,7 +52,7 @@ class DiffMM(nn.Module):
         self.linear_x = nn.Linear(self.hidden_size, self.hidden_size)
 
         from ..CK_encoder import RECK
-        self.reck_encoder = RECK(128, "/root/autodl-tmp/TMR/Model/bert-base-uncased")
+        self.reck_encoder = RECK(128, "/root/autodl-tmp/Model/bert-base-uncased")
 
 
         self.diffusion_steps = args.diffusion_steps
