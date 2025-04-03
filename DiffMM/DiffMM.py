@@ -22,8 +22,8 @@ class DiffMM(nn.Module):
 
         logging.info('Loading BERT pre-trained checkpoint.')
         self.bert = transformers.BertModel.from_pretrained(
-            '/root/autodl-tmp/TMR/Model/bert-base-uncased')  # get the pre-trained BERT model for the text
-        self.tokenizer = BertTokenizer.from_pretrained("/root/autodl-tmp/TMR/Model/bert-base-uncased")
+            '/root/autodl-tmp/Model/bert-base-uncased')  # get the pre-trained BERT model for the text
+        self.tokenizer = BertTokenizer.from_pretrained("/root/autodl-tmp/Model/bert-base-uncased")
         self.tokenizer.add_special_tokens(
             {'additional_special_tokens': ['[unused0]', '[unused1]', '[unused2]', '[unused3]']})
         self.linear = nn.Linear(self.hidden_size, self.hidden_size)
@@ -69,7 +69,7 @@ class DiffMM(nn.Module):
         self.msi_fusion = nn.Linear(self.hidden_size, self.hidden_size // 2)
 
         self.denoise_net = nn.Sequential(
-            nn.Linear(self.hidden_size + 1, self.hidden_size * 2),  # +1 是时间步嵌入
+            nn.Linear(self.hidden_size + 1, self.hidden_size * 2), 
             nn.GELU(),
             nn.Linear(self.hidden_size * 2, self.hidden_size * 2),
             nn.GELU(),
